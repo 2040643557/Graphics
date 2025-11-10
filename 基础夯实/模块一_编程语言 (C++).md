@@ -148,3 +148,177 @@ cout << h1.compare2(h2).getAge() << endl;
  **8.Rule of Three/Five**
  - **三法则**：如果需要析构函数，通常也需要拷贝构造函数和拷贝赋值运算符
  - **五法则**：C++11后，加上移动构造函数和移动赋值运算符
+**9.静态数据成员与静态成员函数**
+- 静态数据成员：类的“全局”变量
+```
+class Human { 
+public:
+    ......
+    int getCount();
+private:
+    string name = "Unknown"; 
+    int age = 28;
+    ......
+    // 类的静态成员
+    static int count;//通常在构造函数里面count++，静态成员不是private
+};
+```
+- 静态成员函数：当前没有可用对象。如果为了访问总的人数，而特意去创建一个对象，就很不方便，而且得到的总人数还不真实（包含了一个没有实际用处的人）
+```
+class Human { 
+public:
+    static int getCount();//没有对象的建立即可调用
+};
+...
+//静态方法的实现，不能加static
+int Human::getCount() {
+// 静态方法中，不能访问实例成员（普通的数据成员）
+// cout << age;
+// 静态方法中，不能访问this指针
+// 因为this指针是属于实例对象的
+// cout << this;
+//静态方法中，只能访问静态数据成员
+return count;
+}
+```
+**10.const数据成员和const成员函数**
+- const数据成员：不能在构造函数或其他成员函数内，对 const 成员赋值
+```
+	const string bloodType;
+	
+// 使用初始化列表，对const数据成员初始化
+Human::Human():bloodType("未知") { ......
+    //在成员函数内，不能对const数据成员赋值
+    //bloodType = "未知血型";
+    count++;
+}
+void Human::description() const { 
+    cout << "age:" << age
+         << " name:" << name
+         << " salary:" << salary
+         << " addr:" << addr
+         << " bloodType:" << bloodType << endl; //其他成员函数可以“读”const变量
+}
+```
+- const成员函数：不会修改任何数据成员，一般用于打印数据
+```
+//Human.h class Human { 
+public:
+    ......
+    void description() const; //注意，const的位置
+    ......
+};
+ 
+//Human.cpp 
+void Human::description ()const { 
+     cout << "age:" << age
+     << " name:" << name
+     << " salary:" << salary
+     << " addr:" << addr
+     << " bloodType:" << bloodType << endl;
+}
+ 
+//main.cpp 
+int main(void) { 
+    const Human h1; 
+    h1.description();
+ 
+    system("pause"); 
+    return 0;
+}
+```
+**二、继承与派生**
+**1.继承与派生的概念**
+	父亲“派生”出儿子，儿子“继承”自父亲，本质是相同的，只是从不同的角度来描述。
+	除了“构造函数”和“析构函数”，父类的所有成员函数，以及数据成员，都会被子类继承！
+```
+//父类
+class Father
+{
+public:
+    Father(const char*name, int age);
+    ~Father();
+ 
+    string getName(); 
+    int getAge(); 
+    string description();
+private:
+    int age; 
+    string name;
+};
+
+Father::Father(const char*name, int age)
+{ 
+    cout << __FUNCTION__ << endl; 
+    this->name = name; 
+    this->age = age;
+}
+ 
+Father::~Father()
+{ 
+ 
+}
+ 
+string Father::getName() { 
+    return name;
+}
+ 
+int Father::getAge() { 
+    return age;
+}
+ 
+string Father::description() { 
+    stringstream ret; ret << "name:" << name << " age:" << age;
+ 
+    return ret.str();
+}
+
+//子类
+class Son : public Father { 
+public:
+    Son(const char *name, int age, const char *game);
+    ~Son(); 
+ 
+    string getGame(); 
+    string description();
+private:
+    string game;
+};
+
+// 创建Son对象时, 会调用构造函数!
+// 会先调用父类的构造函数, 用来初始化从父类继承的数据
+// 再调用自己的构造函数, 用来初始化自己定义的数据
+Son::Son(const char *name, int age, const char *game) : Father(name, age) { 
+    cout << __FUNCTION__ << endl;
+// 没有体现父类的构造函数, 那就会自动调用父类的默认构造函数!!! this->game = game;
+}
+ 
+Son::~Son() {
+ 
+}
+ 
+string Son::getGame() { 
+    return game;
+}
+ 
+string Son::description() { 
+    stringstream ret;
+    // 子类的成员函数中, 不能访问从父类继承的private成员
+ 
+    ret << "name:" << getName() << " age:" << getAge()
+        << " game:" << game; return ret.str();
+}
+
+int main(void) {
+    Father wjl("王健林", 68);
+    Son wsc("王思聪", 32, "电竞");
+ 
+    cout << wjl.description() << endl;
+    // 子类对象调用方法时, 先在自己定义的方法中去寻找, 如果有, 就调用自己定义的方法
+    // 如果找不到, 就到父类的方法中去找, 如果有, 就调用父类的这个同名方法 // 如果还是找不到, 就是发生错误!
+    cout << wsc.description() << endl;
+ 
+    system("pause"); 
+    return 0;
+}
+```
